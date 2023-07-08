@@ -1,0 +1,141 @@
+#include <GL/glut.h>
+#include <math.h>
+#include <stdio.h>
+
+// Variaveis do pou;
+float pouY = 0.0f;
+float pouX = 0.0f;
+
+// Variveis da gravidade;
+float gravity = 0.008f;
+float globalY = 0.0f;
+
+// variaveis do pulo do pou
+float jumpVelocity = 0.12f;
+bool isJumping = false;
+
+bool collision = false;
+
+
+void background() {
+    glColor3f(0.5f, 0.5f, 0.5f); // Cor cinza para as linhas
+   
+}
+
+void pou() {
+    glColor3f(0.71f, 0.61f, 0.52f); // Define a cor de preenchimento como marrom claro
+    glBegin(GL_POLYGON); // Inicia o desenho de um polígono preenchido
+    glVertex2f(0.0f, 0.0f); // base
+    glVertex2f(0.06, 0.010f);
+    glVertex2f(0.116f, 0.032f); // direta
+    glVertex2f(0.118f, 0.036f); // direta
+    glVertex2f(0.12f, 0.04f); // direta
+    glVertex2f(0.12, 0.08f);
+    glVertex2f(0.06, 0.24f);
+    glVertex2f(0.044, 0.272f);
+    glVertex2f(-0.00f, 0.28f); // topo
+    glVertex2f(-0.044, 0.272f);
+    glVertex2f(-0.06, 0.24f);
+    glVertex2f(-0.12, 0.08f);
+    glVertex2f(-0.12f, 0.02f); // esquerda
+    glVertex2f(-0.118f, 0.04f); // esquerda
+    glVertex2f(-0.116f, 0.036f); // esquerda
+    glVertex2f(-0.06f, 0.010f);
+    glEnd(); // Finaliza o desenho do polígono
+
+    glFlush(); // Força a renderização da cena
+}
+
+
+void gravityAction() {
+  if(!collision) {
+    pouY -= gravity;
+  }
+  
+}
+
+void collisionEvent() {
+  if(pouY < -1.0){
+    collision = true;
+  }
+}
+
+
+void pouJump() {
+    if (isJumping) {
+        pouY += jumpVelocity; // Atualiza a posição do círculo com base na velocidade do salto
+        jumpVelocity -= gravity; // Aplica a força da gravidade na velocidade do salto
+
+        // Verifica se o círculo atingiu o chão
+        if (jumpVelocity <= 0.0f) {
+            jumpVelocity = 0.12f; // Anula a velocidade do salto
+            isJumping = false; // Finaliza o salto
+        }
+    }
+}
+
+// Função de renderização
+void renderScene() {
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    background();
+    glTranslatef(0.0f, globalY, 0.0f);
+    glPushMatrix();
+    glTranslatef(pouX, pouY, 0.0f);
+    pou();
+    glPopMatrix();
+    
+
+    glutSwapBuffers();
+}
+
+
+// Função para lidar com o pressionamento das teclas
+void keyboardFunc(unsigned char key, int x, int y) {
+    switch (key) {
+        case 'w':
+            if(collision){
+              isJumping = true; // Mover para cima
+              collision = false; 
+            }
+            break;
+        case 'a':
+            pouX -= 0.1f; // Mover para esquerda
+            break;
+        case 'd':
+            pouX += 0.1f;
+            break;
+        default:
+            break;
+    }
+
+    glutPostRedisplay(); // Atualiza a tela
+}
+
+void gameEventLoop() {
+  gravityAction();
+  pouJump();
+  collisionEvent();
+
+  glutPostRedisplay();
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
+    glutInitWindowSize(800, 600);
+    glutCreateWindow("Oswald");
+
+    glutDisplayFunc(renderScene);
+    glutKeyboardFunc(keyboardFunc);
+
+    glutIdleFunc(gameEventLoop);
+
+    glutMainLoop();
+
+    return 0;
+}
