@@ -1,6 +1,7 @@
 #include <GL/glut.h>
 #include <math.h>
 #include <stdio.h>
+#include <time.h>
 
 // Variaveis do pou;
 float pouY = 0.0f;
@@ -16,10 +17,26 @@ bool isJumping = false;
 
 bool collision = false;
 
+// Variaveis do piso;
+float P_DISTANCE = 0.6f;
+float altura = 0.0f;
+float piso1x = 0.0f;
 
 void background() {
     glColor3f(0.5f, 0.5f, 0.5f); // Cor cinza para as linhas
-   
+
+}
+double gerarNumeroAleatorio() {
+    // Define a semente para a função rand() com base no tempo atual
+    srand(time(NULL));
+
+    // Gera um número aleatório entre 0 e RAND_MAX
+    int randInt = rand();
+
+    // Converte o número aleatório para um valor entre -1.0 e 1.0
+    double randDouble = ((double)randInt / (double)RAND_MAX) * 2.0 - 1.0;
+
+    return randDouble;
 }
 
 void pou() {
@@ -46,6 +63,18 @@ void pou() {
     glFlush(); // Força a renderização da cena
 }
 
+void piso() {
+
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glBegin(GL_POLYGON); // Inicia o desenho de um polígono preenchido
+    glVertex2f(0.0f, 0.0f); // base
+    glVertex2f(0.36f, 0.0f);
+    glVertex2f(0.36f, 0.08f);
+    glVertex2f(0.0f, 0.08f);
+    glEnd(); // Finaliza o desenho do polígono
+    glFlush();
+}
+
 
 void gravityAction() {
   if(!collision) {
@@ -55,11 +84,11 @@ void gravityAction() {
 }
 
 void collisionEvent() {
-  if(pouY < -1.0){
-    collision = true;
-  }
-}
+    if(pouY < -1.0){
+        collision = true;
+    }
 
+}
 
 void pouJump() {
     if (isJumping) {
@@ -73,14 +102,25 @@ void pouJump() {
         }
     }
 }
+// void setupCamera() {
+//     glMatrixMode(GL_MODELVIEW);
+//     glLoadIdentity();
+//     gluLookAt(0.0f, 2.0f, 0.0f,  // Posição da câmera
+//               0.0f, 0.0f, 0.0f,          // Ponto de interesse
+//               0.0f, 1.0f, 0.0f);         // Vetor de orientação da câmera (up)
+// }
 
 // Função de renderização
 void renderScene() {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+    
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    gluLookAt(0.0f, altura, 1.0f,  // Posição da câmera
+              0.0f, altura, 0.0f,          // Ponto de interesse
+              0.0f, 1.0f, 0.0f); 
 
     background();
     glTranslatef(0.0f, globalY, 0.0f);
@@ -88,7 +128,22 @@ void renderScene() {
     glTranslatef(pouX, pouY, 0.0f);
     pou();
     glPopMatrix();
-    
+    glPushMatrix();
+    glTranslatef(0.0f, -0.0f, 0.0f);
+    piso();
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(0.0f, 0.2f, 0.0f);
+    piso();
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(0.0f, 0.8f, 0.0f);
+    piso();
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(0.0f, 1.4f, 0.0f);
+    piso();
+    glPopMatrix();
 
     glutSwapBuffers();
 }
@@ -99,8 +154,8 @@ void keyboardFunc(unsigned char key, int x, int y) {
     switch (key) {
         case 'w':
             if(collision){
-              isJumping = true; // Mover para cima
-              collision = false; 
+                isJumping = true; // Mover para cima
+                collision = false; 
             }
             break;
         case 'a':
@@ -117,11 +172,11 @@ void keyboardFunc(unsigned char key, int x, int y) {
 }
 
 void gameEventLoop() {
-  gravityAction();
-  pouJump();
-  collisionEvent();
+    gravityAction();
+    pouJump();
+    collisionEvent();
 
-  glutPostRedisplay();
+    glutPostRedisplay();
 }
 
 int main(int argc, char** argv) {
