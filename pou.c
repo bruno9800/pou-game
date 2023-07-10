@@ -21,9 +21,14 @@ bool collision = false;
 float P_DISTANCE = 0.6f;
 
 float altura_tela = 0.0f;
-float altura_pou = 0.0f; // estado;
+float altura_pou = -1.0f; // estado;
 
 float piso_Y[] = {-0.4, 0.2, 0.8, 1.4};
+float piso_X[] = {-0.0, 0.4, -0.2, 0.2};
+
+int ind_piso_Y_menor = 0;
+
+bool checkCollision = false;
 
 void background() {
     glColor3f(0.5f, 0.5f, 0.5f); // Cor cinza para as linhas
@@ -70,30 +75,56 @@ void piso() {
 
     glColor3f(0.0f, 1.0f, 0.0f);
     glBegin(GL_POLYGON); // Inicia o desenho de um polígono preenchido
-    glVertex2f(0.0f, 0.0f); // base
-    glVertex2f(0.36f, 0.0f);
-    glVertex2f(0.36f, 0.08f);
-    glVertex2f(0.0f, 0.08f);
+    glVertex2f(-0.18f, 0.0f); // base
+    glVertex2f(0.18f, 0.0f);
+    glVertex2f(0.18f, 0.08f);
+    glVertex2f(-0.18f, 0.08f);
     glEnd(); // Finaliza o desenho do polígono
     glFlush();
 }
 
 
 void gravityAction() {
-  if(!collision) {
-    pouY -= gravity;
-  }
-  
+    if(!collision) {
+        pouY -= gravity;
+    }
 }
 
 void collisionEvent() {
-    if(pouY < -1.0){
+    if(pouY < altura_pou){
         collision = true;
     }
+    
 
-    if(collision && altura_tela != altura_pou) {
-      altura_tela = altura_pou;
+    if(collision && altura_tela != altura_pou + 1.0) {
+        float tmp;
+        altura_tela = altura_pou;
+        checkCollision = false; 
+        tmp = piso_Y[ind_piso_Y_menor] + P_DISTANCE;
+        piso_Y[ind_piso_Y_menor] += 2.2;
+        for(int i = 0; i < 4; i++ ) {
+            if(tmp == piso_Y[i])
+                ind_piso_Y_menor = i;
+        }
+
     }
+
+    if(pouY >= piso_Y[ind_piso_Y_menor] + 0.08) {
+        checkCollision = true;
+    }
+
+    if(checkCollision) {
+            if(pouY >= piso_Y[ind_piso_Y_menor] && pouY <= piso_Y[ind_piso_Y_menor] + 0.08) {
+                collision = true;
+                checkCollision = false;
+                altura_pou = piso_Y[ind_piso_Y_menor] + 0.08;
+
+            }
+            if(pouY < piso_Y[ind_piso_Y_menor]) {
+                checkCollision = false;
+        }
+    }
+    
 
 }
 
@@ -117,8 +148,8 @@ void renderScene() {
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluLookAt(0.0f, altura_tela, 1.0f,  // Posição da câmera
-              0.0f, altura_tela, 0.0f,          // Ponto de interesse
+    gluLookAt(0.0f, -altura_tela, 1.0f,  // Posição da câmera
+              0.0f, -altura_tela, 0.0f,          // Ponto de interesse
               0.0f, 1.0f, 0.0f); 
 
     background();
@@ -128,19 +159,19 @@ void renderScene() {
     pou();
     glPopMatrix();
     glPushMatrix();
-    glTranslatef(0.5f,piso_Y[0], 0.0f);
+    glTranslatef(piso_X[0],piso_Y[0], 0.0f);
     piso();
     glPopMatrix();
     glPushMatrix();
-    glTranslatef(0.1f,piso_Y[1],0.0f);
+    glTranslatef(piso_X[1],piso_Y[1],0.0f);
     piso();
     glPopMatrix();
     glPushMatrix();
-    glTranslatef(-0.2f,piso_Y[2],0.0f);
+    glTranslatef(-piso_X[2],piso_Y[2],0.0f);
     piso();
     glPopMatrix();
     glPushMatrix();
-    glTranslatef(0.0f,piso_Y[3],0.0f);
+    glTranslatef(piso_X[3],piso_Y[3],0.0f);
     piso();
     glPopMatrix();
 
