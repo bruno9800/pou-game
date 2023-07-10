@@ -20,10 +20,10 @@ bool collision = false;
 // Variaveis do piso;
 float P_DISTANCE = 0.6f;
 
-float altura = 0.0f;
+float altura_tela = 0.0f;
+float altura_pou = 0.0f; // estado;
 
-float h_pou = 0.0f; // estado;
-float piso_Y[] = {0.2, 0.8, 1.2, 1.8};
+float piso_Y[] = {-0.4, 0.2, 0.8, 1.4};
 
 void background() {
     glColor3f(0.5f, 0.5f, 0.5f); // Cor cinza para as linhas
@@ -91,6 +91,10 @@ void collisionEvent() {
         collision = true;
     }
 
+    if(collision && altura_tela != altura_pou) {
+      altura_tela = altura_pou;
+    }
+
 }
 
 void pouJump() {
@@ -113,8 +117,8 @@ void renderScene() {
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluLookAt(0.0f, altura, 1.0f,  // Posição da câmera
-              0.0f, altura, 0.0f,          // Ponto de interesse
+    gluLookAt(0.0f, altura_tela, 1.0f,  // Posição da câmera
+              0.0f, altura_tela, 0.0f,          // Ponto de interesse
               0.0f, 1.0f, 0.0f); 
 
     background();
@@ -124,19 +128,19 @@ void renderScene() {
     pou();
     glPopMatrix();
     glPushMatrix();
-    glTranslatef(0.0f, -0.0f, 0.0f);
+    glTranslatef(0.5f,piso_Y[0], 0.0f);
     piso();
     glPopMatrix();
     glPushMatrix();
-    glTranslatef(0.0f, 0.2f, 0.0f);
+    glTranslatef(0.1f,piso_Y[1],0.0f);
     piso();
     glPopMatrix();
     glPushMatrix();
-    glTranslatef(0.0f, 0.8f, 0.0f);
+    glTranslatef(-0.2f,piso_Y[2],0.0f);
     piso();
     glPopMatrix();
     glPushMatrix();
-    glTranslatef(0.0f, 1.4f, 0.0f);
+    glTranslatef(0.0f,piso_Y[3],0.0f);
     piso();
     glPopMatrix();
 
