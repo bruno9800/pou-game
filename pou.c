@@ -9,6 +9,8 @@
 
 int gameState = 0; // 0 para menu, 1 para jogo em execução
 
+int score = 0;
+
 int width, height, numChannels;
 unsigned char* image;
 
@@ -88,14 +90,11 @@ void textureEnable() {
 }
 
 double random_x_position() {
-    // Define a semente para a função rand() com base no tempo atual
     srand(time(NULL));
-
-    // Gera um número aleatório entre 0 e RAND_MAX
     int randInt = rand();
 
     // Converte o número aleatório para um valor entre -1.0 e 1.0
-    double randDouble = ((double)randInt / (double)RAND_MAX) * 2.0 - 1.0;
+    double randDouble = ((double)randInt / (double)RAND_MAX) * 1.6 - 0.8;
 
     return randDouble;
 }
@@ -192,11 +191,14 @@ void calcular_indices(int *atual, int *prox) {
 
 
 void collisionEvent() {
-   if(pou_no_piso_atual()) {
-        collision = true;
-   }else {
-        collision = false;
+    collision = pou_no_piso_atual();
+
+   if(pouY < altura_tela - 1.4) {
+    printf("game over\n");
+    printf("score: %d\n", score);
+    exit(1);
    }
+
    if(pou_passou_do_proximo_piso()) {
         verificar_descida = true;
    }
@@ -210,6 +212,7 @@ void collisionEvent() {
             calcular_indices(&ind_piso_atual, &ind_piso_prox);
             verificar_descida = false;
             altura_tela += P_DISTANCE;
+            score++;
         }
    }
 }
