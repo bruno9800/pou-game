@@ -5,6 +5,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include <stdlib.h>
+#include <stdbool.h>
 
 int gameState = 0; // 0 para menu, 1 para jogo em execução
 
@@ -12,7 +13,7 @@ int width, height, numChannels;
 unsigned char* image;
 
 // Variaveis do pou;
-float pouY = 0.0f;
+float pouY = -0.4f;
 float pouX = 0.0f;
 
 // Variveis da gravidade;
@@ -29,12 +30,13 @@ bool collision = false;
 float P_DISTANCE = 0.6f;
 
 float altura_tela = 0.0f;
-float altura_pou = -1.0f; // estado;
+float altura_pou = -0.6f; // estado;
 
-float piso_Y[] = {-0.4, 0.2, 0.8, 1.4};
+float piso_Y[] = {-0.6, 0.0, 0.6, 1.2};
 float piso_X[] = {-0.0, 0.4, -0.2, 0.2};
 
-int ind_piso_Y_menor = 0;
+int ind_piso_atual = 0;
+int ind_piso_prox = 1;
 
 bool checkCollision = false;
 GLuint textureID;
@@ -69,7 +71,23 @@ void loadTexture() {
 }
 
 
-double gerarNumeroAleatorio() {
+void textureEnable() {
+    glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 0.0f);
+        glVertex2f(-1.0f, -1.0f);
+        glTexCoord2f(1.0f, 0.0f);
+        glVertex2f(1.0f, -1.0f);
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex2f(1.0f, 1.0f);
+        glTexCoord2f(0.0f, 1.0f);
+        glVertex2f(-1.0f, 1.0f);
+        glEnd();
+        glDisable(GL_TEXTURE_2D);
+}
+
+double random_x_position() {
     // Define a semente para a função rand() com base no tempo atual
     srand(time(NULL));
 
@@ -125,42 +143,75 @@ void gravityAction() {
     }
 }
 
+
+int ind_menor(int atual) {
+    float menor = piso_Y[atual];
+    int ind_menor;
+
+    for(int i = 0 ; i < 4; i++) {
+        if(piso_Y[0] < menor) {
+            menor = piso_Y[i];
+            ind_menor = i;
+        }
+    }
+
+    return ind_menor;
+}
+
+bool pou_no_piso_atual() {
+    bool emX =  pouX >= piso_X[ind_piso_atual]-0.25 && pouX <= piso_X[ind_piso_atual] + 0.25;
+    bool emY =  pouY <= piso_Y[ind_piso_atual] + 0.08 && pouY >= piso_Y[ind_piso_atual];
+    return emX && emY;
+}
+
+bool pou_passando_na_descida() {
+    bool emY = pouY >= piso_Y[ind_piso_prox] && pouY <= piso_Y[ind_piso_prox] + 0.08;
+    bool emX = pouX >= piso_X[ind_piso_prox]-0.25 && pouX <= piso_X[ind_piso_prox] + 0.25;
+    return emY && emX;
+}
+
+bool pou_passou_do_proximo_piso() {
+    return pouY >= piso_Y[ind_piso_prox] + 0.08;
+}
+
+bool verificar_descida = false;
+
+void atualiza_atual(int atual){
+    piso_Y[atual] += 2.4f;
+    piso_X[atual] = random_x_position();
+    printf("valor atualizado: %.2f\n", piso_Y[atual]);
+}
+
+void calcular_indices(int *atual, int *prox) {
+    float prox_value = piso_Y[*prox] + P_DISTANCE;
+    *atual = *prox;
+    *prox = (*prox + 1) % 4;
+    printf("prox_value: %.2f", prox_value);
+    printf("\natual: %d\nprox: %d\n", *atual, *prox);
+}
+
+
 void collisionEvent() {
-    if(pouY < altura_pou){
+   if(pou_no_piso_atual()) {
         collision = true;
-    }
-    
-
-    if(collision && altura_tela != altura_pou + 1.0) {
-        float tmp;
-        altura_tela = altura_pou;
-        checkCollision = false; 
-        tmp = piso_Y[ind_piso_Y_menor] + P_DISTANCE;
-        piso_Y[ind_piso_Y_menor] += 2.2;
-        for(int i = 0; i < 4; i++ ) {
-            if(tmp == piso_Y[i])
-                ind_piso_Y_menor = i;
+   }else {
+        collision = false;
+   }
+   if(pou_passou_do_proximo_piso()) {
+        verificar_descida = true;
+   }
+   if(verificar_descida) {
+        if(pouY < piso_Y[ind_piso_prox]){
+            verificar_descida = false;
         }
-
-    }
-
-    if(pouY >= piso_Y[ind_piso_Y_menor] + 0.08) {
-        checkCollision = true;
-    }
-
-    if(checkCollision) {
-            if(pouY >= piso_Y[ind_piso_Y_menor] && pouY <= piso_Y[ind_piso_Y_menor] + 0.08) {
-                collision = true;
-                checkCollision = false;
-                altura_pou = piso_Y[ind_piso_Y_menor] + 0.08;
-
-            }
-            if(pouY < piso_Y[ind_piso_Y_menor]) {
-                checkCollision = false;
+        if(pou_passando_na_descida()) {
+            float prox_value =  piso_Y[ind_piso_prox];
+            atualiza_atual(ind_piso_atual);
+            calcular_indices(&ind_piso_atual, &ind_piso_prox);
+            verificar_descida = false;
+            altura_tela += P_DISTANCE;
         }
-    }
-    
-
+   }
 }
 
 void pouJump() {
@@ -201,29 +252,11 @@ void renderScene() {
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        gluOrtho2D(-1.0, 1.0, -1.0, 1.0);
-
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-        gluLookAt(0.0f, -altura_tela, 1.0f,
-                  0.0f, -altura_tela, 0.0f,
+        gluLookAt(0.0f, altura_tela, 1.0f,
+                  0.0f, altura_tela, 0.0f,
                   0.0f, 1.0f, 0.0f);
-
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 0.0f);
-        glVertex2f(-1.0f, -1.0f);
-        glTexCoord2f(1.0f, 0.0f);
-        glVertex2f(1.0f, -1.0f);
-        glTexCoord2f(1.0f, 1.0f);
-        glVertex2f(1.0f, 1.0f);
-        glTexCoord2f(0.0f, 1.0f);
-        glVertex2f(-1.0f, 1.0f);
-        glEnd();
-        glDisable(GL_TEXTURE_2D);
 
         glTranslatef(0.0f, globalY, 0.0f);
         glPushMatrix();
@@ -239,7 +272,7 @@ void renderScene() {
         piso();
         glPopMatrix();
         glPushMatrix();
-        glTranslatef(-piso_X[2], piso_Y[2], 0.0f);
+        glTranslatef(piso_X[2], piso_Y[2], 0.0f);
         piso();
         glPopMatrix();
         glPushMatrix();
@@ -303,11 +336,11 @@ int main(int argc, char** argv) {
 
     glutIdleFunc(gameEventLoop);
 
-    loadTexture();
+    //loadTexture();
 
     glutMainLoop();
 
-    stbi_image_free(image);
+    //stbi_image_free(image);
 
     return 0;
 }
