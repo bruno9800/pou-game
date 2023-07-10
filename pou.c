@@ -2,6 +2,14 @@
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#include <stdlib.h>
+
+int gameState = 0; // 0 para menu, 1 para jogo em execução
+
+int width, height, numChannels;
+unsigned char* image;
 
 // Variaveis do pou;
 float pouY = 0.0f;
@@ -29,11 +37,38 @@ float piso_X[] = {-0.0, 0.4, -0.2, 0.2};
 int ind_piso_Y_menor = 0;
 
 bool checkCollision = false;
+GLuint textureID;
 
-void background() {
-    glColor3f(0.5f, 0.5f, 0.5f); // Cor cinza para as linhas
+void loadTexture() {
+    image = stbi_load("background.jpg", &width, &height, &numChannels, 0);
+    
+    if (image == NULL) {
+        printf("Falha ao carregar a imagem de fundo.\n");
+        exit(1);
+    }
+
+    // Verificar se a imagem possui formato RGB de 24 bits (8 bits por canal)
+    if (numChannels != 3) {
+        printf("A imagem não está no formato RGB de 24 bits.\n");
+        stbi_image_free(image);
+        exit(1);
+    }
+
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    // Configurar parâmetros de filtragem e repetição da textura
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    // Carregar a imagem como textura
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 
 }
+
+
 double gerarNumeroAleatorio() {
     // Define a semente para a função rand() com base no tempo atual
     srand(time(NULL));
@@ -142,60 +177,108 @@ void pouJump() {
 }
 // Função de renderização
 void renderScene() {
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    
+    if (gameState == 0) { // Estado do menu
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    gluLookAt(0.0f, -altura_tela, 1.0f,  // Posição da câmera
-              0.0f, -altura_tela, 0.0f,          // Ponto de interesse
-              0.0f, 1.0f, 0.0f); 
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluOrtho2D(0, width, 0, height);
 
-    background();
-    glTranslatef(0.0f, globalY, 0.0f);
-    glPushMatrix();
-    glTranslatef(pouX, pouY, 0.0f);
-    pou();
-    glPopMatrix();
-    glPushMatrix();
-    glTranslatef(piso_X[0],piso_Y[0], 0.0f);
-    piso();
-    glPopMatrix();
-    glPushMatrix();
-    glTranslatef(piso_X[1],piso_Y[1],0.0f);
-    piso();
-    glPopMatrix();
-    glPushMatrix();
-    glTranslatef(-piso_X[2],piso_Y[2],0.0f);
-    piso();
-    glPopMatrix();
-    glPushMatrix();
-    glTranslatef(piso_X[3],piso_Y[3],0.0f);
-    piso();
-    glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
 
+        glColor3f(1.0f, 1.0f, 1.0f);
+
+        glRasterPos2f(10.0f, 10.0f);
+
+        const char* menuText = "Pressione Enter para iniciar o jogo";
+
+        for (int i = 0; menuText[i] != '\0'; i++) {
+            glutBitmapCharacter(GLUT_BITMAP_9_BY_15, menuText[i]);
+        }
+    } else {
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluOrtho2D(-1.0, 1.0, -1.0, 1.0);
+
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        gluLookAt(0.0f, -altura_tela, 1.0f,
+                  0.0f, -altura_tela, 0.0f,
+                  0.0f, 1.0f, 0.0f);
+
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 0.0f);
+        glVertex2f(-1.0f, -1.0f);
+        glTexCoord2f(1.0f, 0.0f);
+        glVertex2f(1.0f, -1.0f);
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex2f(1.0f, 1.0f);
+        glTexCoord2f(0.0f, 1.0f);
+        glVertex2f(-1.0f, 1.0f);
+        glEnd();
+        glDisable(GL_TEXTURE_2D);
+
+        glTranslatef(0.0f, globalY, 0.0f);
+        glPushMatrix();
+        glTranslatef(pouX, pouY, 0.0f);
+        pou();
+        glPopMatrix();
+        glPushMatrix();
+        glTranslatef(piso_X[0], piso_Y[0], 0.0f);
+        piso();
+        glPopMatrix();
+        glPushMatrix();
+        glTranslatef(piso_X[1], piso_Y[1], 0.0f);
+        piso();
+        glPopMatrix();
+        glPushMatrix();
+        glTranslatef(-piso_X[2], piso_Y[2], 0.0f);
+        piso();
+        glPopMatrix();
+        glPushMatrix();
+        glTranslatef(piso_X[3], piso_Y[3], 0.0f);
+        piso();
+        glPopMatrix();
+    }
     glutSwapBuffers();
 }
 
 
+
 // Função para lidar com o pressionamento das teclas
 void keyboardFunc(unsigned char key, int x, int y) {
-    switch (key) {
-        case 'w':
-            if(collision){
-                isJumping = true; // Mover para cima
-                collision = false; 
-            }
-            break;
-        case 'a':
-            pouX -= 0.1f; // Mover para esquerda
-            break;
-        case 'd':
-            pouX += 0.1f;
-            break;
-        default:
-            break;
+     if (gameState == 0) { // Verificar se está no estado do menu
+        switch (key) {
+            case 13: // Tecla Enter
+                gameState = 1; // Mudar para o estado do jogo em execução
+                break;
+            default:
+                break;
+        }
+    } else {
+        switch (key) {
+            case 'w':
+                if(collision){
+                    isJumping = true; // Mover para cima
+                    collision = false; 
+                }
+                break;
+            case 'a':
+                pouX -= 0.1f; // Mover para esquerda
+                break;
+            case 'd':
+                pouX += 0.1f;
+                break;
+            default:
+                break;
+        }
     }
 
     glutPostRedisplay(); // Atualiza a tela
@@ -220,7 +303,11 @@ int main(int argc, char** argv) {
 
     glutIdleFunc(gameEventLoop);
 
+    loadTexture();
+
     glutMainLoop();
+
+    stbi_image_free(image);
 
     return 0;
 }
