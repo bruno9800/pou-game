@@ -13,7 +13,7 @@ int gameState = 0; // 0 para menu, 1 para jogo em execução;
 int score = 0;
 
 // image texture;
-int width, height, numChannels;
+int imageWidth, imageHeight, numChannels;
 unsigned char* image;
 GLuint textureID;
 
@@ -43,48 +43,42 @@ float piso_X[] = {-0.0, 0.4, -0.2, 0.2};
 int ind_piso_atual = 0;
 int ind_piso_prox = 1;
 
-void loadTexture() {
-    image = stbi_load("background.jpg", &width, &height, &numChannels, 0);
-    
+void loadTexture(const char* filename) {
+    image = stbi_load(filename, &imageWidth, &imageHeight, &numChannels, 0);
+
     if (image == NULL) {
         printf("Falha ao carregar a imagem de fundo.\n");
         exit(1);
     }
 
-    // Verificar se a imagem possui formato RGB de 24 bits (8 bits por canal)
-    if (numChannels != 3) {
-        printf("A imagem não está no formato RGB de 24 bits.\n");
-        stbi_image_free(image);
-        exit(1);
-    }
 
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-    // Configurar parâmetros de filtragem e repetição da textura
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Configuração dos parâmetros da textura
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    // Carregar a imagem como textura
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    // Carrega a imagem como textura
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 
+    stbi_image_free(image);
 }
-
 
 void textureEnable() {
     glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, textureID);
         glBegin(GL_QUADS);
         glTexCoord2f(0.0f, 0.0f);
-        glVertex2f(-1.0f, -1.0f);
-        glTexCoord2f(1.0f, 0.0f);
-        glVertex2f(1.0f, -1.0f);
-        glTexCoord2f(1.0f, 1.0f);
         glVertex2f(1.0f, 1.0f);
-        glTexCoord2f(0.0f, 1.0f);
+        glTexCoord2f(1.0f, 0.0f);
         glVertex2f(-1.0f, 1.0f);
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex2f(-1.0f, -1.0f);
+        glTexCoord2f(0.0f, 1.0f);
+        glVertex2f(1.0f, -1.0f);
         glEnd();
         glDisable(GL_TEXTURE_2D);
 }
@@ -308,6 +302,8 @@ void renderScene() {
         glClear(GL_COLOR_BUFFER_BIT);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
+        //loadTexture("paisagem.jpg");
+        //textureEnable();
     if (gameState == 0) { // Estado do menu
 
         glPushMatrix();
@@ -400,7 +396,7 @@ void gameEventLoop() {
 
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(800, 600);
     glutCreateWindow("Oswald");
 
