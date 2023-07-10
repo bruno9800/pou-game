@@ -19,8 +19,11 @@ bool collision = false;
 
 // Variaveis do piso;
 float P_DISTANCE = 0.6f;
+
 float altura = 0.0f;
-float piso1x = 0.0f;
+
+float h_pou = 0.0f; // estado;
+float piso_Y[] = {0.2, 0.8, 1.2, 1.8};
 
 void background() {
     glColor3f(0.5f, 0.5f, 0.5f); // Cor cinza para as linhas
@@ -102,14 +105,6 @@ void pouJump() {
         }
     }
 }
-// void setupCamera() {
-//     glMatrixMode(GL_MODELVIEW);
-//     glLoadIdentity();
-//     gluLookAt(0.0f, 2.0f, 0.0f,  // Posição da câmera
-//               0.0f, 0.0f, 0.0f,          // Ponto de interesse
-//               0.0f, 1.0f, 0.0f);         // Vetor de orientação da câmera (up)
-// }
-
 // Função de renderização
 void renderScene() {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
