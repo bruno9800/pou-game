@@ -2,8 +2,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -43,45 +41,6 @@ float piso_X[] = {-0.0, 0.4, -0.2, 0.2};
 int ind_piso_atual = 0;
 int ind_piso_prox = 1;
 
-void loadTexture(const char* filename) {
-    image = stbi_load(filename, &imageWidth, &imageHeight, &numChannels, 0);
-
-    if (image == NULL) {
-        printf("Falha ao carregar a imagem de fundo.\n");
-        exit(1);
-    }
-
-
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-
-    // Configuração dos parâmetros da textura
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Carrega a imagem como textura
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-
-    stbi_image_free(image);
-}
-
-void textureEnable() {
-    glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 0.0f);
-        glVertex2f(1.0f, 1.0f);
-        glTexCoord2f(1.0f, 0.0f);
-        glVertex2f(-1.0f, 1.0f);
-        glTexCoord2f(1.0f, 1.0f);
-        glVertex2f(-1.0f, -1.0f);
-        glTexCoord2f(0.0f, 1.0f);
-        glVertex2f(1.0f, -1.0f);
-        glEnd();
-        glDisable(GL_TEXTURE_2D);
-}
 
 double random_x_position() {
     srand(time(NULL));
@@ -290,8 +249,7 @@ void game_over() {
         for(int i = 0; i < strlen(label); i++){
             glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, label[i]);
         }
-
-
+        
         reset();
 
 }
@@ -302,8 +260,7 @@ void renderScene() {
         glClear(GL_COLOR_BUFFER_BIT);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-        //loadTexture("paisagem.jpg");
-        //textureEnable();
+        
     if (gameState == 0) { // Estado do menu
 
         glPushMatrix();
@@ -402,14 +359,10 @@ int main(int argc, char** argv) {
 
     glutDisplayFunc(renderScene);
     glutKeyboardFunc(keyboardFunc);
-     glutMouseFunc(mouseClick);
+    glutMouseFunc(mouseClick);
     glutIdleFunc(gameEventLoop);
 
-    //loadTexture();
-
     glutMainLoop();
-
-    //stbi_image_free(image);
 
     return 0;
 }
